@@ -4,7 +4,7 @@ set -euo pipefail
 REPO="SteamClientHomebrew/Millennium"
 PATCH_REPO="JankyMouse/Millennium-Bazzite"
 MILLENNIUM_TAG="v3.5.0"
-PATCH_TAG="v3.5.0-bazzite.1"
+PATCH_TAG="v3.5.0-bazzite.2"
 DEST="/var/lib/millennium"
 STEAM="${STEAM_PATH:-$HOME/.steam/steam}"
 
