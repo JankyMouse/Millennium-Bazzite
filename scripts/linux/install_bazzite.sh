@@ -2,30 +2,28 @@
 set -euo pipefail
 
 REPO="SteamClientHomebrew/Millennium"
+PATCH_REPO="JankyMouse/Millennium-Bazzite"
+MILLENNIUM_TAG="v3.5.0"
+PATCH_TAG="v3.5.0-bazzite.1"
 DEST="/var/lib/millennium"
 STEAM="${STEAM_PATH:-$HOME/.steam/steam}"
 
-for cmd in curl tar jq perl sudo strings grep sha256sum cp chmod mv mktemp rm sed ln mkdir; do
+for cmd in curl tar perl sudo strings grep sha256sum cp chmod mv mktemp rm sed ln mkdir; do
   command -v "$cmd" >/dev/null || { echo "error: $cmd not installed" >&2; exit 1; }
 done
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/millennium-bazzite.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 
-echo "fetching latest Millennium release"
-TAG=$(curl -fsSL -H 'Accept: application/vnd.github.v3+json' \
-  "https://api.github.com/repos/${REPO}/releases" \
-  | jq -r '[.[] | select(.prerelease == false)] | first | .tag_name')
-[ -n "$TAG" ] && [ "$TAG" != "null" ] || { echo "error: could not determine latest release" >&2; exit 1; }
-
-VERSION="${TAG#v}"
+VERSION="${MILLENNIUM_TAG#v}"
 ARCHIVE="millennium-v${VERSION}-linux-x86_64.tar.gz"
-URL="https://github.com/${REPO}/releases/download/${TAG}/${ARCHIVE}"
-echo "downloading Millennium ${VERSION}"
-curl -fL --progress-bar -o "$WORK/millennium.tar.gz" "$URL"
+UPSTREAM_URL="https://github.com/${REPO}/releases/download/${MILLENNIUM_TAG}/${ARCHIVE}"
+PATCH_URL="https://github.com/${PATCH_REPO}/releases/download/${PATCH_TAG}"
+echo "downloading Millennium ${MILLENNIUM_TAG}"
+curl -fL --progress-bar -o "$WORK/millennium.tar.gz" "$UPSTREAM_URL"
 
 SHA=$(curl -fsSL \
-  "https://github.com/${REPO}/releases/download/${TAG}/millennium-v${VERSION}-linux-x86_64.sha256" \
+  "https://github.com/${REPO}/releases/download/${MILLENNIUM_TAG}/millennium-v${VERSION}-linux-x86_64.sha256" \
   2>/dev/null || true)
 if [ -n "$SHA" ]; then
   (cd "$WORK" && printf '%s\n' "$SHA" | sed "s|${ARCHIVE}|millennium.tar.gz|" | sha256sum -c --status) \
@@ -34,6 +32,19 @@ if [ -n "$SHA" ]; then
 else
   echo "warning: release checksum unavailable; continuing without checksum verification" >&2
 fi
+
+echo "downloading Bazzite-patched helper ${PATCH_TAG}"
+curl -fL --progress-bar -o "$WORK/libmillennium_hhx64.so" \
+  "${PATCH_URL}/libmillennium_hhx64.so"
+curl -fsSL -o "$WORK/libmillennium_hhx64.so.sha256" \
+  "${PATCH_URL}/libmillennium_hhx64.so.sha256"
+read -r PATCH_SHA _ < "$WORK/libmillennium_hhx64.so.sha256"
+if [[ ! "$PATCH_SHA" =~ ^[[:xdigit:]]{64}$ ]]; then
+  echo "error: invalid patched-helper checksum file" >&2
+  exit 1
+fi
+printf '%s  %s\n' "$PATCH_SHA" "$WORK/libmillennium_hhx64.so" | sha256sum -c --status \
+  || { echo "error: patched-helper checksum mismatch" >&2; exit 1; }
 
 tar -xzf "$WORK/millennium.tar.gz" -C "$WORK"
 SRC="$WORK/usr/lib/millennium"
@@ -45,6 +56,8 @@ if strings "$SRC"/* | grep -qF '/usr/lib/millennium'; then
   echo "error: unpatched installation paths remain" >&2
   exit 1
 fi
+
+cp "$WORK/libmillennium_hhx64.so" "$SRC/libmillennium_hhx64.so"
 
 echo "installing Millennium to ${DEST}"
 sudo mkdir -p "$DEST"

@@ -12,9 +12,9 @@ Open-source modding framework for creating and managing Steam Client themes and 
 
 Installing Millennium is only a few steps. See [here](https://docs.steambrew.app/users/getting-started/installation) for a more detailed guide.
 
-## Bazzite installation draft
+## Bazzite installation preview
 
-See [docs/bazzite.md](docs/bazzite.md) for the community installer draft and the proposed Steam-loopback route MIME fix.
+See [docs/bazzite.md](docs/bazzite.md) for the community installer preview and Steam-loopback route MIME fix.
 
 ## Packaging Status[^2]
 
