@@ -45,6 +45,7 @@ pub fn mime_type_for_url(url: &str) -> &'static std::ffi::CStr {
         ".ttf" => c"font/ttf",
         ".woff" => c"font/woff",
         ".woff2" => c"font/woff2",
+        _ if path.starts_with("/routes/") => c"text/html",
         _ => c"application/octet-stream",
     }
 }
@@ -103,7 +104,15 @@ pub fn local_path_from_lb_url(url: &str) -> Option<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::local_path_from_lb_url;
+    use super::{local_path_from_lb_url, mime_type_for_url};
+
+    #[test]
+    fn serves_steam_ui_routes_as_html() {
+        assert_eq!(
+            mime_type_for_url("https://steamloopback.host/routes/library/home").to_bytes(),
+            b"text/html"
+        );
+    }
 
     #[test]
     fn resolves_a_normal_asset_path() {

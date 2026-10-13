@@ -12,6 +12,10 @@ Open-source modding framework for creating and managing Steam Client themes and 
 
 Installing Millennium is only a few steps. See [here](https://docs.steambrew.app/users/getting-started/installation) for a more detailed guide.
 
+## Bazzite installation draft
+
+See [docs/bazzite.md](docs/bazzite.md) for the community installer draft and the proposed Steam-loopback route MIME fix.
+
 ## Packaging Status[^2]
 
 Millennium has been packaged/ported to the following external repositories. SteamClientHomebrew **only maintains select** derivatives, all other repositories and maintained by the community.  
